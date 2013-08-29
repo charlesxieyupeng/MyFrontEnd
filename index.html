@@ -8,7 +8,6 @@
       <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
 </script>
 <!--map js-->
-<script type="text/javascript" src="js/moment.js"></script>
 <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script> 
 <script type="text/javascript"> 
 
@@ -43,7 +42,6 @@ $("#btn").click(function(){
                 $("#alertinfo").text("There was no earthquake records for this city.");
               }
             });
-            $("#alertinfo").text("You can check details by clicking the markers");
           } else {
              $("#alertinfo").text("Oh man, this place is not on earth though..." + status);
           }
@@ -51,10 +49,26 @@ $("#btn").click(function(){
 });
 
 $("#btn2").click(function(){
-      loadTopTen();
-      if(positions.length!=0){
+            positions = [];
+            var url = "http://api.geonames.org/earthquakesJSON?north=90&south=-90&east=180&west=-180&username=charliexieyupeng"
+            $.getJSON(url, function(data) {
+              var x;
+              for(x in data.earthquakes){
+                var position = {
+                  lng:data.earthquakes[x].lng,
+                  lat:data.earthquakes[x].lat,
+                  datetime:data.earthquakes[x].datetime,
+                  magnitude:data.earthquakes[x].magnitude
+                };
+                positions.push(position);
+              }
+              if(positions.length!=0){
                 setMarkers(map, positions);
-      }
+              }
+              else{
+                $("#alertinfo").text("There was no earthquake records in last 12 month on earth.");
+              }
+            });
 });
 });
 
@@ -65,54 +79,6 @@ function getUrl(longitude, latitude){
   var sout = latitude-1;
   var url = "http://api.geonames.org/earthquakesJSON?north="+north+"&south="+sout+"&east="+east+"&west="+west+"&username=charliexieyupeng";
   return url;
-}
-
-function getDatetime(subtractDays){
-  var temp = moment().subtract('days', subtractDays).calendar()
-  var now = moment(temp, "MM/DD/YYYY").format("YYYY-MM-DD");
-  return now;
-}
-
-function loadTopTen(){
-  positions = [];
-  for(var i = 7;i<=365;i++){
-    var datetime = getDatetime(i);
-    var url = "http://api.geonames.org/earthquakesJSON?north=90&south=-90&east=180&west=-180&datetime="+datetime+"&username=charliexieyupeng"
-  $.getJSON(url, function(data) {
-   var x;
-   for(x in data.earthquakes){
-    var position = {
-                  lng:data.earthquakes[x].lng,
-                  lat:data.earthquakes[x].lat,
-                  datetime:data.earthquakes[x].datetime,
-                  magnitude:data.earthquakes[x].magnitude
-                };
-        if(positions.length<10){
-           positions.push(position);
-        }
-        else{
-           var temp = getSmallestMagnitude();
-           if(temp>data.earthquakes[x].magnitude){
-              for(var z=0;z<10;z++){
-                 if(positions[z].magnitude == temp)
-                   positions.splice(z,1);
-              }
-              positions.push(position);
-           }
-        }
-    }    
-   });
-  }
-}
-
-function getSmallestMagnitude(){
-  var smallestMagnitude = 100;
-  if(positions.length==0) return 0;
-  for(x in positions){
-    if(smallestMagnitude>positions[x].magnitude)
-      smallestMagnitude=positions[x].magnitude;
-  }
-  return smallestMagnitude;
 }
 
 var map = null;
@@ -266,7 +232,6 @@ function setMarkers(map, locations) {
                 <li class="divider"></li>
                 <li ><a href="https://www.facebook.com/charlesxieyupeng">Facebook</a></li>
               </ul>
-              <p id="pp"></p>
           </div>
         </div>
       </div>
